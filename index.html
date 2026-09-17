@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyber-dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="CampusPulse - The clean, intuitive college survival dashboard for tracking attendance, bunk forecasting, assignment deadlines, weekly timetable, and exam countdowns.">
+  <title>CampusPulse | Student Survival Dashboard</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Celebratory Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="app-layout">
+    <!-- Clean, Streamlined Header -->
+    <header class="app-header">
+      <div class="header-main-row">
+        <!-- Brand -->
+        <div class="brand-group">
+          <div class="brand-logo">
+            <i data-lucide="zap" class="logo-icon"></i>
+          </div>
+          <div>
+            <div class="brand-title-row">
+              <h1 class="brand-title">CampusPulse</h1>
+              <span class="brand-badge">College OS</span>
+            </div>
+            <p class="brand-subtitle" id="header-student-tag">Personal Academic Dashboard</p>
+          </div>
+        </div>
+
+        <!-- Live Status & Clock -->
+        <div class="header-center-info">
+          <div class="pill-info">
+            <span class="status-live-dot"></span>
+            <span id="current-day-name">Thursday</span>, <span id="current-date-str">17 Sep</span> • <span
+              id="live-digital-clock" class="mono-time">13:30:00</span>
+          </div>
+        </div>
+
+        <!-- Useful Header Tools & Controls -->
+        <div class="header-actions-group">
+          <!-- 1-Click Day / Night Toggle -->
+          <button id="btn-day-night-toggle" class="btn-tool" title="Toggle Day/Night Mode" onclick="toggleDayNight()">
+            <i data-lucide="sun" id="theme-toggle-icon"></i>
+            <span id="theme-toggle-text">Day Mode</span>
+          </button>
+
+          <!-- Theme Palette Selector -->
+          <div class="theme-dropdown-wrapper">
+            <button class="btn-tool" id="btn-theme-menu" onclick="toggleThemeMenu()">
+              <i data-lucide="palette"></i>
+              <span>Themes</span>
+              <i data-lucide="chevron-down" style="width: 13px; height: 13px;"></i>
+            </button>
+            <div class="theme-dropdown-menu" id="theme-dropdown-menu">
+              <div class="theme-menu-header">Select Color Theme</div>
+              <button class="theme-opt-btn active" data-theme="cyber-dark" onclick="selectTheme('cyber-dark')">
+                <span class="color-swatch bg-cyber"></span>
+                <span>🌙 Cyber Dark (Default)</span>
+              </button>
+              <button class="theme-opt-btn" data-theme="day-light" onclick="selectTheme('day-light')">
+                <span class="color-swatch bg-light"></span>
+                <span>☀️ Day / Clean Light</span>
+              </button>
+              <button class="theme-opt-btn" data-theme="midnight" onclick="selectTheme('midnight')">
+                <span class="color-swatch bg-midnight"></span>
+                <span>🖤 Midnight OLED</span>
+              </button>
+              <button class="theme-opt-btn" data-theme="emerald" onclick="selectTheme('emerald')">
+                <span class="color-swatch bg-emerald"></span>
+                <span>🌲 Emerald Forest</span>
+              </button>
+              <button class="theme-opt-btn" data-theme="sunset" onclick="selectTheme('sunset')">
+                <span class="color-swatch bg-sunset"></span>
+                <span>🌸 Sunset Violet</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Student Tools (CGPA Calculator & Print Report) -->
+          <button class="btn-tool" onclick="openModal('modal-cgpa-calculator')" title="Quick SGPA / CGPA Calculator">
+            <i data-lucide="calculator"></i>
+            <span>CGPA Tool</span>
+          </button>
+
+          <button class="btn-tool" onclick="printAcademicReport()" title="Print Academic Summary Report">
+            <i data-lucide="printer"></i>
+            <span>Report</span>
+          </button>
+
+          <!-- User Profile & Sign Out -->
+          <div class="user-chip-container" id="user-chip-box">
+            <!-- Rendered by JS based on whether a student is logged in -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-bar">
+        <div class="nav-container">
+          <button class="nav-tab active" data-tab="dashboard">
+            <i data-lucide="home"></i>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-tab" data-tab="attendance">
+            <i data-lucide="pie-chart"></i>
+            <span>Attendance & Eligibility Forecaster</span>
+            <span class="tab-badge" id="attendance-warning-badge" style="display: none;">Warning</span>
+          </button>
+          <button class="nav-tab" data-tab="deadlines">
+            <i data-lucide="check-square"></i>
+            <span>Assignments & Practicals</span>
+            <span class="tab-badge-count" id="pending-count-badge">0</span>
+          </button>
+          <button class="nav-tab" data-tab="timetable">
+            <i data-lucide="clock"></i>
+            <span>Class Timetable</span>
+          </button>
+          <button class="nav-tab" data-tab="exams">
+            <i data-lucide="flame"></i>
+            <span>Exam Countdown</span>
+          </button>
+          <button class="nav-tab" data-tab="notices">
+            <i data-lucide="bell"></i>
+            <span>Noticeboard</span>
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="main-body">
+
+      <!-- ================= TAB 1: SIMPLE CLEAN DASHBOARD ================= -->
+      <section id="tab-dashboard" class="tab-page active">
+        <!-- Friendly Welcome & Status Card -->
+        <div class="welcome-card card">
+          <div class="welcome-text-wrap">
+            <h2 class="welcome-title" id="dash-greeting-text">Welcome to CampusPulse!</h2>
+            <p class="welcome-sub" id="dash-greeting-sub">Track your classes, stay safely above 75% attendance, and
+              never miss a submission.</p>
+          </div>
+          <div class="welcome-actions">
+            <button class="btn-primary" onclick="openAddSubjectModal()">
+              <i data-lucide="plus"></i> Add Subject
+            </button>
+            <button class="btn-outline" onclick="openAddDeadlineModal()">
+              <i data-lucide="calendar-plus"></i> Add Deadline
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Summary Stats Grid -->
+        <div class="stats-overview-grid">
+          <div class="stat-box card" onclick="switchTab('attendance')">
+            <div class="stat-top">
+              <span class="stat-lbl">Average Attendance</span>
+              <i data-lucide="pie-chart" class="stat-icon text-indigo"></i>
+            </div>
+            <div class="stat-num" id="dash-stat-attendance">--%</div>
+            <div class="stat-sub" id="dash-stat-attendance-desc">No subjects registered yet</div>
+          </div>
+
+          <div class="stat-box card" onclick="switchTab('deadlines')">
+            <div class="stat-top">
+              <span class="stat-lbl">Pending Submissions</span>
+              <i data-lucide="alert-circle" class="stat-icon text-amber"></i>
+            </div>
+            <div class="stat-num" id="dash-stat-tasks">0</div>
+            <div class="stat-sub" id="dash-stat-tasks-desc">All assignments up to date</div>
+          </div>
+
+          <div class="stat-box card" onclick="switchTab('exams')">
+            <div class="stat-top">
+              <span class="stat-lbl">Upcoming Exams</span>
+              <i data-lucide="hourglass" class="stat-icon text-violet"></i>
+            </div>
+            <div class="stat-num" id="dash-stat-exam">-- Days</div>
+            <div class="stat-sub" id="dash-stat-exam-desc">No upcoming exams set</div>
+          </div>
+
+          <div class="stat-box card" onclick="switchTab('timetable')">
+            <div class="stat-top">
+              <span class="stat-lbl">Today's Lectures</span>
+              <i data-lucide="calendar" class="stat-icon text-cyan"></i>
+            </div>
+            <div class="stat-num" id="dash-stat-classes">4 Slots</div>
+            <div class="stat-sub">View full weekly timetable</div>
+          </div>
+        </div>
+
+        <!-- 2-Column Split: Easy Eligibility Forecaster & Urgent Submissions -->
+        <div class="dash-grid-split">
+          <!-- Left: Attendance Eligibility & Contingency Leave Forecaster -->
+          <div class="card dash-col">
+            <div class="card-head">
+              <div class="card-head-title">
+                <i data-lucide="shield-check" class="text-indigo"></i>
+                <div>
+                  <h3>Attendance Eligibility Forecaster</h3>
+                  <span>Analyze how an emergency leave affects your 75% criteria</span>
+                </div>
+              </div>
+            </div>
+            <div class="quick-bunk-body">
+              <label class="form-label" for="dash-bunk-subject-select">Select a course to analyze:</label>
+              <select id="dash-bunk-subject-select" class="form-control" onchange="updateDashboardBunkSimulation()">
+                <!-- Populated by JS -->
+              </select>
+              <div class="bunk-simulation-box mt-4" id="dash-bunk-result-box">
+                <!-- Result populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Urgent Tasks Due Soon -->
+          <div class="card dash-col">
+            <div class="card-head">
+              <div class="card-head-title">
+                <i data-lucide="clock" class="text-rose"></i>
+                <div>
+                  <h3>Upcoming Submissions</h3>
+                  <span>Assignments and practicals requiring attention</span>
+                </div>
+              </div>
+              <button class="btn-xs btn-primary" onclick="openAddDeadlineModal()">
+                <i data-lucide="plus"></i> Add
+              </button>
+            </div>
+            <div class="dash-urgent-list" id="dash-urgent-deadlines-container">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: ATTENDANCE TRACKER ================= -->
+      <section id="tab-attendance" class="tab-page">
+        <div class="page-top-bar">
+          <div>
+            <h2 class="page-title">Smart Attendance Tracker & Eligibility Forecaster</h2>
+            <p class="page-desc">Track your course attendance in real time. The system calculates your safe contingency
+              margin and alerts you before you fall into shortage.</p>
+          </div>
+          <button class="btn-primary" onclick="openAddSubjectModal()">
+            <i data-lucide="plus-circle"></i> Add Subject
+          </button>
+        </div>
+
+        <!-- Global Summary Bar -->
+        <div class="card attendance-summary-strip">
+          <div class="summary-col">
+            <span class="strip-label">Overall Attendance</span>
+            <div class="strip-val-row">
+              <span class="strip-value" id="global-att-percent">--%</span>
+              <span class="pill-badge pill-safe" id="global-att-status">Safe</span>
+            </div>
+          </div>
+          <div class="strip-divider"></div>
+          <div class="summary-col">
+            <span class="strip-label">Total Classes Attended</span>
+            <div class="strip-val-row">
+              <span class="strip-value" id="global-att-counts">0 / 0</span>
+              <span class="strip-hint" id="global-att-hint">Across Subjects</span>
+            </div>
+          </div>
+          <div class="strip-divider"></div>
+          <div class="summary-col">
+            <span class="strip-label">Mandatory Minimum</span>
+            <div class="strip-val-row">
+              <span class="strip-value">75%</span>
+              <span class="strip-hint">University Requirement</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subjects Grid -->
+        <div class="subjects-grid" id="subjects-container">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: ASSIGNMENTS & PRACTICALS ================= -->
+      <section id="tab-deadlines" class="tab-page">
+        <div class="page-top-bar">
+          <div>
+            <h2 class="page-title">Assignments & Practical Submissions</h2>
+            <p class="page-desc">Track deadlines with live countdowns. Check off completed items to celebrate!</p>
+          </div>
+          <button class="btn-primary" onclick="openAddDeadlineModal()">
+            <i data-lucide="plus-circle"></i> Add Deadline
+          </button>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="card toolbar-card">
+          <div class="search-input-box">
+            <i data-lucide="search"></i>
+            <input type="text" id="deadline-search" placeholder="Search tasks, subjects, notes..."
+              oninput="renderDeadlinesTab()">
+          </div>
+          <div class="filter-pills">
+            <button class="filter-btn active" data-filter="all" onclick="setDeadlineFilter('all', this)">All</button>
+            <button class="filter-btn" data-filter="pending"
+              onclick="setDeadlineFilter('pending', this)">Pending</button>
+            <button class="filter-btn" data-filter="urgent" onclick="setDeadlineFilter('urgent', this)">Due Soon (&lt;
+              48h)</button>
+            <button class="filter-btn" data-filter="practical" onclick="setDeadlineFilter('practical', this)">Lab
+              Practicals</button>
+            <button class="filter-btn" data-filter="assignment"
+              onclick="setDeadlineFilter('assignment', this)">Assignments</button>
+            <button class="filter-btn" data-filter="completed"
+              onclick="setDeadlineFilter('completed', this)">Completed</button>
+          </div>
+        </div>
+
+        <!-- Deadlines List -->
+        <div class="deadlines-list" id="deadlines-list-container">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: CLASS TIMETABLE ================= -->
+      <section id="tab-timetable" class="tab-page">
+        <div class="page-top-bar">
+          <div>
+            <h2 class="page-title">Weekly Class Timetable</h2>
+            <p class="page-desc">Organized Monday through Saturday schedule with classrooms and faculty names.</p>
+          </div>
+        </div>
+
+        <!-- Day Switcher Pills -->
+        <div class="day-switch-row" id="day-switch-container">
+          <button class="day-btn" onclick="selectDay('Monday', this)">Monday</button>
+          <button class="day-btn" onclick="selectDay('Tuesday', this)">Tuesday</button>
+          <button class="day-btn" onclick="selectDay('Wednesday', this)">Wednesday</button>
+          <button class="day-btn active" onclick="selectDay('Thursday', this)">Thursday</button>
+          <button class="day-btn" onclick="selectDay('Friday', this)">Friday</button>
+          <button class="day-btn" onclick="selectDay('Saturday', this)">Saturday</button>
+        </div>
+
+        <!-- Timetable Slots Grid -->
+        <div class="timetable-grid" id="timetable-slots-container">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ================= TAB 5: EXAM COUNTDOWN ================= -->
+      <section id="tab-exams" class="tab-page">
+        <div class="page-top-bar">
+          <div>
+            <h2 class="page-title">Exam Countdowns & Syllabus Readiness</h2>
+            <p class="page-desc">Live ticking timers so you never get caught unprepared for mid-sem or semester finals.
+            </p>
+          </div>
+          <button class="btn-primary" onclick="openAddExamModal()">
+            <i data-lucide="plus-circle"></i> Add Exam
+          </button>
+        </div>
+
+        <div class="exams-grid" id="exams-container">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ================= TAB 6: CAMPUS NOTICEBOARD ================= -->
+      <section id="tab-notices" class="tab-page">
+        <div class="page-top-bar">
+          <div>
+            <h2 class="page-title">Campus Noticeboard</h2>
+            <p class="page-desc">Official departmental circulars, hackathons, and student club workshops in one neat
+              feed.</p>
+          </div>
+        </div>
+
+        <div class="notices-grid" id="notices-container">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= AUTHENTICATION MODAL (CLEAN SELF-REGISTRATION) ================= -->
+  <div class="modal-backdrop" id="modal-auth-gate">
+    <div class="modal-card auth-modal card">
+      <div class="auth-card-header">
+        <div class="brand-logo mb-2" style="margin: 0 auto;">
+          <i data-lucide="user-check" class="logo-icon"></i>
+        </div>
+        <h2 class="auth-title">Welcome to CampusPulse</h2>
+        <p class="auth-subtitle">Register your student account or sign in to save your attendance and tasks</p>
+      </div>
+
+      <!-- Auth Switcher Tabs (Sign In vs Register) -->
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="tab-btn-register" onclick="switchAuthMode('register')">
+          <i data-lucide="user-plus"></i> Register Student Account
+        </button>
+        <button class="auth-tab-btn" id="tab-btn-login" onclick="switchAuthMode('login')">
+          <i data-lucide="log-in"></i> Sign In
+        </button>
+      </div>
+
+      <!-- 1. Student Registration Form (Clean Slate) -->
+      <div class="auth-form-wrap" id="auth-view-register">
+        <form onsubmit="handleUserRegistration(event)">
+          <div class="form-row">
+            <div class="form-group col">
+              <label>Your Full Name *</label>
+              <input type="text" id="reg-name" class="form-control" placeholder="e.g. Rahul Sharma" required>
+            </div>
+            <div class="form-group col">
+              <label>Roll Number *</label>
+              <input type="text" id="reg-roll" class="form-control" placeholder="e.g. 23BCSE045" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label>Email Address *</label>
+              <input type="email" id="reg-email" class="form-control" placeholder="e.g. rahul@college.edu" required>
+            </div>
+            <div class="form-group col">
+              <label>Password *</label>
+              <input type="password" id="reg-password" class="form-control" placeholder="Create a password" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label>College / Branch *</label>
+              <input type="text" id="reg-branch" class="form-control" placeholder="e.g. Computer Science & Engg."
+                required>
+            </div>
+            <div class="form-group col">
+              <label>Current Semester *</label>
+              <select id="reg-sem" class="form-control">
+                <option value="1st Semester">1st Semester</option>
+                <option value="2nd Semester">2nd Semester</option>
+                <option value="3rd Semester">3rd Semester</option>
+                <option value="4th Semester">4th Semester</option>
+                <option value="5th Semester" selected>5th Semester</option>
+                <option value="6th Semester">6th Semester</option>
+                <option value="7th Semester">7th Semester</option>
+                <option value="8th Semester">8th Semester</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary w-100 mt-4">
+            <i data-lucide="check-circle"></i> Create My Account & Open Dashboard
+          </button>
+        </form>
+      </div>
+
+      <!-- 2. Sign In Form -->
+      <div class="auth-form-wrap" id="auth-view-login" style="display: none;">
+        <form onsubmit="handleUserLogin(event)">
+          <div class="form-group">
+            <label>Email or Roll Number</label>
+            <input type="text" id="login-email" class="form-control" placeholder="e.g. rahul@college.edu or 23BCSE045"
+              required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn-primary w-100 mt-4">
+            <i data-lucide="log-in"></i> Sign In to My Account
+          </button>
+        </form>
+      </div>
+
+      <div class="modal-footer-cancel" id="auth-cancel-btn-box" style="display: none;">
+        <button class="btn-ghost btn-xs" onclick="closeModal('modal-auth-gate')">Keep Current Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= USEFUL TOOL: CGPA / SGPA CALCULATOR MODAL ================= -->
+  <div class="modal-backdrop" id="modal-cgpa-calculator">
+    <div class="modal-card card modal-wide">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i data-lucide="calculator" class="modal-icon text-indigo"></i>
+          <div>
+            <h3>Semester SGPA / CGPA Calculator</h3>
+            <span class="text-muted">Enter your course grades and credits to compute your GPA instantly</span>
+          </div>
+        </div>
+        <button class="btn-close" onclick="closeModal('modal-cgpa-calculator')">&times;</button>
+      </div>
+
+      <div class="cgpa-calculator-body">
+        <div class="cgpa-table-header">
+          <span>Course Name</span>
+          <span>Credits</span>
+          <span>Grade</span>
+          <span>Action</span>
+        </div>
+        <div class="cgpa-rows-container" id="cgpa-rows-container">
+          <!-- Rows inserted by JS -->
+        </div>
+
+        <div class="cgpa-actions-row mt-4">
+          <button class="btn-outline btn-xs" onclick="addCgpaRow()">
+            <i data-lucide="plus"></i> Add Another Course
+          </button>
+          <div class="cgpa-result-display">
+            Calculated SGPA: <strong id="calculated-sgpa-val">0.00</strong> / 10.0
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-primary" onclick="closeModal('modal-cgpa-calculator')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ADD SUBJECT MODAL ================= -->
+  <div class="modal-backdrop" id="modal-add-subject">
+    <div class="modal-card card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i data-lucide="book-plus" class="modal-icon text-indigo"></i>
+          <h3>Add Academic Subject</h3>
+        </div>
+        <button class="btn-close" onclick="closeModal('modal-add-subject')">&times;</button>
+      </div>
+      <form onsubmit="handleSaveSubject(event)">
+        <div class="form-group">
+          <label>Subject Name *</label>
+          <input type="text" id="sub-name-input" class="form-control" placeholder="e.g. Operating Systems" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label>Subject Code</label>
+            <input type="text" id="sub-code-input" class="form-control" placeholder="e.g. CS501">
+          </div>
+          <div class="form-group col">
+            <label>Faculty / Teacher</label>
+            <input type="text" id="sub-faculty-input" class="form-control" placeholder="e.g. Prof. Sharma">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label>Classes Attended So Far *</label>
+            <input type="number" id="sub-attended-input" class="form-control" min="0" value="15" required>
+          </div>
+          <div class="form-group col">
+            <label>Total Classes Held *</label>
+            <input type="number" id="sub-total-input" class="form-control" min="1" value="20" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Target Cutoff (% required by university)</label>
+          <input type="number" id="sub-cutoff-input" class="form-control" min="50" max="100" value="75">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" onclick="closeModal('modal-add-subject')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Subject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= ADD DEADLINE MODAL ================= -->
+  <div class="modal-backdrop" id="modal-add-deadline">
+    <div class="modal-card card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i data-lucide="file-plus" class="modal-icon text-indigo"></i>
+          <h3>Add Submission / Deadline</h3>
+        </div>
+        <button class="btn-close" onclick="closeModal('modal-add-deadline')">&times;</button>
+      </div>
+      <form onsubmit="handleSaveDeadline(event)">
+        <div class="form-group">
+          <label>Assignment or Practical Title *</label>
+          <input type="text" id="dl-title-input" class="form-control" placeholder="e.g. OS Practical 4 Write-up"
+            required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label>Subject *</label>
+            <select id="dl-subject-input" class="form-control" required>
+              <!-- Populated by JS -->
+            </select>
+          </div>
+          <div class="form-group col">
+            <label>Type</label>
+            <select id="dl-type-input" class="form-control">
+              <option value="practical">Lab Practical</option>
+              <option value="assignment">Theory Assignment</option>
+              <option value="project">Project Milestone</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label>Due Date & Time *</label>
+            <input type="datetime-local" id="dl-datetime-input" class="form-control" required>
+          </div>
+          <div class="form-group col">
+            <label>Priority</label>
+            <select id="dl-priority-input" class="form-control">
+              <option value="high">High (Urgent)</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes / Submission Instructions</label>
+          <textarea id="dl-notes-input" class="form-control" rows="2"
+            placeholder="e.g. Submit handwritten journal + upload PDF on Moodle"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" onclick="closeModal('modal-add-deadline')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Deadline</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= ADD EXAM MODAL ================= -->
+  <div class="modal-backdrop" id="modal-add-exam">
+    <div class="modal-card card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i data-lucide="alarm-clock" class="modal-icon text-indigo"></i>
+          <h3>Add Exam Countdown</h3>
+        </div>
+        <button class="btn-close" onclick="closeModal('modal-add-exam')">&times;</button>
+      </div>
+      <form onsubmit="handleSaveExam(event)">
+        <div class="form-group">
+          <label>Exam Name *</label>
+          <input type="text" id="exam-title-input" class="form-control" placeholder="e.g. Mid-Semester Exams" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label>Exam Date *</label>
+            <input type="datetime-local" id="exam-date-input" class="form-control" required>
+          </div>
+          <div class="form-group col">
+            <label>Type</label>
+            <select id="exam-type-input" class="form-control">
+              <option value="Theory Exam">Theory Exam</option>
+              <option value="Practical / Viva">Practical / Viva</option>
+              <option value="Internal Test">Internal Assessment</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Syllabus Readiness (% Prepared)</label>
+          <input type="range" id="exam-readiness-input" class="slider-input" min="0" max="100" value="50"
+            oninput="document.getElementById('readiness-val').innerText = this.value + '%'">
+          <div class="slider-readout">Prepared: <span id="readiness-val">50%</span></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" onclick="closeModal('modal-add-exam')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Exam</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+
+</html>
